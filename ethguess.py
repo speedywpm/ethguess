@@ -1,8 +1,7 @@
 import os
 import requests
-import codecs
 import ecdsa
-import hashlib
+from eth_utils import keccak
 from colorama import Fore, Style, init
 import concurrent.futures
 
@@ -17,7 +16,7 @@ init(autoreset=True)
 def checksum_encode(addr_str): # Takes a hex (string) address as input
     out = ''
     addr = addr_str.lower().replace('0x', '')
-    hash_addr = hashlib.sha3_256(addr.encode('ascii')).hexdigest()
+    hash_addr = keccak(text=addr).hex()
     for i, c in enumerate(addr):
         if int(hash_addr[i], 16) >= 8:
             out += c.upper()
@@ -28,7 +27,7 @@ def checksum_encode(addr_str): # Takes a hex (string) address as input
 def privToAddr(priv):
     priv = bytes.fromhex(priv)
     pub = '04' + ecdsa.SigningKey.from_string(priv, curve=ecdsa.SECP256k1).get_verifying_key().to_string().hex()
-    address = hashlib.sha3_256(bytes.fromhex(pub)).hexdigest()[24:]
+    address = keccak(hexstr=pub[2:]).hex()[24:]  # Last 20 bytes
     return checksum_encode(address)
 
 def get_balance_and_tx_status(address):
